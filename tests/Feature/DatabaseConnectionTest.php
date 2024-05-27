@@ -10,9 +10,6 @@ use Tests\TestCase;
 
 class DatabaseConnectionTest extends TestCase
 {
-    use RefreshDatabase;
-
-
     public function test_it_can_connect_to_the_database(): void
     {
         try {

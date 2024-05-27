@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function index(){}
+    public function index(Request $request)
+    {
+        $perPage = $request->per_page ?? 15;
+        $users = User::paginate($perPage);
+
+        return UserResource::collection($users);
+    }
 
     public function store(Request $request)
     {

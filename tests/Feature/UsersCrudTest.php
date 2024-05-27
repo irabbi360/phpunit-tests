@@ -13,6 +13,35 @@ class UsersCrudTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_it_can_fetch_a_paginated_list_of_users()
+    {
+        // Arrange:: Create multiple users
+        $users = User::factory()->count(30)->create();
+
+        $response = $this->get(route('users.index', ['page' => 1, 'per_page' => 10]));
+
+        // Assert: Check that the response is as expected
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => ['id', 'name', 'email', 'created_at', 'updated_at'],
+            ],
+            'links',
+            'meta' => [
+                'current_page',
+                'last_page',
+                'per_page',
+                'total',
+            ],
+        ]);
+
+        // Additional assertions to check the pagination details
+        $responseData = $response->json();
+        $this->assertEquals(1, $responseData['meta']['current_page']);
+        $this->assertEquals(10, $responseData['meta']['per_page']);
+        $this->assertEquals(30, $responseData['meta']['total']);
+    }
+
     /** @test */
     public function it_can_store_a_user(): void
     {
