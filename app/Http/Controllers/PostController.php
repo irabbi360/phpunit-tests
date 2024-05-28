@@ -39,7 +39,7 @@ class PostController extends Controller
         $post->status = $request->status;
 
         if ($post->save()) {
-            return response()->json(['success' => true, 'message' => 'Post saved successfully']);
+            return response()->json(['success' => true, 'message' => 'Post saved successfully'], 201);
         }
         return response()->json(['success' => false, 'message' => 'Post save fail!']);
     }
@@ -49,7 +49,7 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        return new PostResource($post);
+        return response()->json($post, 200);
     }
 
     /**

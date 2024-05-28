@@ -3,18 +3,21 @@
 namespace Tests\Feature;
 
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class PostCrudTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * A basic feature test example.
      */
     public function test_it_can_fetch_a_paginated_list_of_posts(): void
     {
-        $posts = Post::factory()->count(50)->create();
+        Post::factory()->count(50)->create();
 
         $response = $this->get(route('posts.index', ['page' => 1, 'per_page' => 15]));
         $response->assertStatus(200);
@@ -37,21 +40,34 @@ class PostCrudTest extends TestCase
         $this->assertEquals(50, $responseData['meta']['total']);
     }
 
-    public function test_it_can_store_a_post()
+    public function it_creates_a_post_with_a_user()
     {
-        $data = [
-            'title' => 'This is a test post',
-            'slug' => 'this-is-a-test-post',
-            'user_id' => 1,
-            'body' => 'Lorem ipsum Plain password, it will be hashed by the controller. Prepare the data for the user to be created.',
-            'status' => 1,
-        ];
+        $user = User::factory()->create();
 
-        $response = $this->post(route('posts.store'), $data);
+        $post = Post::factory()->create(['user_id' => $user->id]);
+
+        // Assertions
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->assertInstanceOf(User::class, $post->user);
+        $this->assertEquals($user->id, $post->user->id);
+    }
+
+    public function test_it_can_fetch_a_post()
+    {
+        $post = Post::factory()->create();
+        $response = $this->get(route('posts.show', $post->id));
         $response->assertStatus(200);
         $response->assertJson([
-            'success' => true,
-            'message' => 'User store successfully',
+            'id' => $post->id,
+            'title' => $post->title,
+            'slug' => $post->slug,
+            'user_id' => $post->user_id,
+            'body' => $post->body,
+            'status' => $post->status,
         ]);
     }
 }
