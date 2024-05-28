@@ -70,4 +70,61 @@ class PostCrudTest extends TestCase
             'status' => $post->status,
         ]);
     }
+
+    public function test_it_return_404_post_not_found()
+    {
+        $response = $this->get(route('posts.show', 9899));
+        $response->assertStatus(404);
+    }
+
+    public function test_it_update_a_post()
+    {
+        $user = User::factory()->create();
+
+        $post = Post::factory()->create(['user_id' => $user->id]);
+
+        $data = [
+            'title' => 'Updated Post Title',
+            'body' => 'Updated Post Body',
+            'status' => 0,
+        ];
+
+        $response = $this->actingAs($user)->putJson(route('posts.update', $post->id), $data);
+
+        $updatedPost = Post::find($post->id);
+        $response->assertStatus(200);
+        $response->assertJson(['message' => 'Post updated successfully']);
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'title' => $data['title'],
+            'body' => $data['body'],
+            'status' => $data['status'],
+            'user_id' => $user->id,
+        ]);
+
+        $this->assertEquals($data['title'], $updatedPost->title);
+        $this->assertEquals($data['body'], $updatedPost->body);
+        $this->assertEquals($data['status'], $updatedPost->status);
+        $this->assertEquals($user->id, $updatedPost->user_id);
+    }
+
+    public function test_it_can_delete_a_post_by_user()
+    {
+        $user = User::factory()->create();
+
+        $post = Post::factory()->create(['user_id' => $user->id]);
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($user)->deleteJson(route('posts.destroy', $post->id));
+
+        $response->assertStatus(200);
+        $this->assertDatabaseMissing('posts', [
+            'id' => $post->id
+        ]);
+    }
 }
